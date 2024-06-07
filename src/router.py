@@ -2,14 +2,14 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, status, HTTPException, Security
+from fastapi import APIRouter, Depends, HTTPException, Security, status
 from fastapi.responses import JSONResponse
 from fastapi.security import APIKeyHeader
 from fastapi.security.oauth2 import OAuth2PasswordRequestForm as LoginSchema
 from starlette.requests import Request
 
 from src.config import SCHEDULER_API_KEY
-from src.service import login, oauth2_scheme, get_refresh_token, logout, token_is_valid
+from src.service import get_refresh_token, login, logout, oauth2_scheme, token_is_valid
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 api_key_header = APIKeyHeader(name="X-API-Key")
@@ -24,6 +24,11 @@ async def login_route(
     response_data = await login(
         login_schema.username, login_schema.password, request.state.clinic
     )
+    if not response_data:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Credenciais Inválidas",
+        )
     return JSONResponse(content=response_data, status_code=status.HTTP_200_OK)
 
 

@@ -13,6 +13,6 @@ def rundev(cmd):
 def runtest(cmd, file=None):
     """Run tests."""
     if file:
-        cmd.run(f"pytest tests/{file}.py")
+        cmd.run(f"pytest src/tests/{file}.py")
     else:
-        cmd.run("pytest tests")
+        cmd.run("pytest src/tests")

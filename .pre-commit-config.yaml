@@ -28,14 +28,14 @@ repos:
       - id: black # Python code auto formatter
         additional_dependencies: ['click==8.0.4']
         exclude: '__init__.py|logs/.*'
-# -  repo: local
-#    hooks:
-#       - id: pytest
-#         name: pytest
-#         entry: pytest
-#         language: system
-#         pass_filenames: false
-#         always_run: true
+-  repo: local
+   hooks:
+      - id: pytest
+        name: pytest
+        entry: pytest
+        language: system
+        pass_filenames: false
+        always_run: true
 -  repo: local
    hooks:
       - id: restricted-filenames

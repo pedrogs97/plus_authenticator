@@ -1,19 +1,20 @@
 """Service for authentication"""
 
 import logging
-from datetime import datetime, timedelta, time
+from datetime import datetime, timedelta
 from typing import Union
-from fastapi import HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
+
 import jwt
-from plus_db_agent.models import ClinicModel, UserModel, TokenModel
+from fastapi.security import OAuth2PasswordBearer
+from plus_db_agent.models import ClinicModel, TokenModel, UserModel
 from tortoise.expressions import Q
+
 from src.config import (
-    bcrypt_context,
     ACCESS_TOKEN_EXPIRE_HOURS,
-    SECRET_KEY,
     ALGORITHM,
     REFRESH_TOKEN_EXPIRE_DAYS,
+    SECRET_KEY,
+    bcrypt_context,
 )
 
 logger = logging.getLogger(__name__)
@@ -24,6 +25,11 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login/")
 def password_is_correct(password: str, hashed_password: str) -> bool:
     """Verify if password is correct"""
     return bcrypt_context.verify(password, hashed_password)
+
+
+def hash_password(password: str) -> str:
+    """Hash password"""
+    return bcrypt_context.hash(password)
 
 
 async def get_new_token(user: UserModel) -> dict:
@@ -37,7 +43,7 @@ async def get_new_token(user: UserModel) -> dict:
     else:
         permissions = []
     access_expire_in = datetime.now() + timedelta(hours=ACCESS_TOKEN_EXPIRE_HOURS)
-    access_expire_timestamp = int(time.mktime(access_expire_in.timetuple()))
+    access_expire_timestamp = int(access_expire_in.timestamp())
     encode = {
         "iat": datetime.now().timestamp(),
         "exp": access_expire_timestamp,
@@ -53,7 +59,7 @@ async def get_new_token(user: UserModel) -> dict:
     }
     token = jwt.encode(encode, SECRET_KEY, algorithm=ALGORITHM)
     refresh_expire = datetime.now() + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
-    refresh_expire_timestamp = time.mktime(refresh_expire.timetuple())
+    refresh_expire_timestamp = int(refresh_expire.timestamp())
     refresh_encode = {
         "iat": datetime.now().timestamp(),
         "exp": refresh_expire_timestamp,
@@ -81,7 +87,7 @@ async def get_new_token(user: UserModel) -> dict:
         old_token.token = token
         old_token.refresh_token = refresh_token
         old_token.expires_at = access_expire_in
-        old_token.refresh_expires_at = (refresh_expire,)
+        old_token.refresh_expires_at = refresh_expire
         old_token.save()
     return {
         "access_token": token,
@@ -94,7 +100,7 @@ async def get_new_token(user: UserModel) -> dict:
 def token_is_valid(token: Union[TokenModel, dict]) -> bool:
     """Verifies token validity"""
     if token and isinstance(token, TokenModel):
-        return token.expires_at > datetime.now()
+        return token.expires_at > datetime.now(tz=token.expires_at.tzinfo)
     if isinstance(token, dict) and token and "exp" in token:
         return token["exp"] > datetime.now().timestamp() and token["type"] == "access"
     return False
@@ -122,12 +128,10 @@ async def login(
     ).first()
     if not user or not password_is_correct(password, user.password):
         return None
-    if not clinic and not user.is_superuser:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+    if (not user.profile or not clinic) and not user.is_superuser:
+        return None
     if clinic and user.clinic != clinic:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
-    if not user.profile and not user.is_superuser:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+        return None
     user.last_login_in = datetime.now()
     return await get_new_token(user)
 
@@ -160,6 +164,6 @@ async def get_refresh_token(
             return None
         if clinic and user.clinic != clinic:
             return None
-        return get_new_token(user)
+        return await get_new_token(user)
     except jwt.PyJWTError:
         return None
