@@ -97,12 +97,21 @@ async def get_new_token(user: UserModel) -> dict:
     }
 
 
-def token_is_valid(token: Union[TokenModel, dict]) -> bool:
+def token_is_valid(token: Union[TokenModel, dict, str]) -> bool:
     """Verifies token validity"""
     if token and isinstance(token, TokenModel):
         return token.expires_at > datetime.now(tz=token.expires_at.tzinfo)
     if isinstance(token, dict) and token and "exp" in token:
         return token["exp"] > datetime.now().timestamp() and token["type"] == "access"
+    if isinstance(token, str):
+        try:
+            token_decoded = jwt.decode(token, SECRET_KEY, algorithms=ALGORITHM)
+            return (
+                token_decoded["exp"] > datetime.now().timestamp()
+                and token_decoded["type"] == "access"
+            )
+        except jwt.PyJWTError:
+            return False
     return False
 
 

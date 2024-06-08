@@ -8,8 +8,15 @@ from fastapi.security import APIKeyHeader
 from fastapi.security.oauth2 import OAuth2PasswordRequestForm as LoginSchema
 from starlette.requests import Request
 
-from src.config import SCHEDULER_API_KEY
-from src.service import get_refresh_token, login, logout, oauth2_scheme, token_is_valid
+from src.config import SERVICES_API_KEY
+from src.service import (
+    get_refresh_token,
+    get_user_by_token,
+    login,
+    logout,
+    oauth2_scheme,
+    token_is_valid,
+)
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 api_key_header = APIKeyHeader(name="X-API-Key")
@@ -41,13 +48,13 @@ async def refresh_token(
     return JSONResponse(content=response_data, status_code=status.HTTP_200_OK)
 
 
-@router.post("/check-token/")
+@router.get("/check-token/")
 async def check_token(
     token: Annotated[str, Depends(oauth2_scheme)],
     key_header=Security(api_key_header),
 ):
     """Check a token"""
-    if key_header == SCHEDULER_API_KEY and token_is_valid(token):
+    if key_header in SERVICES_API_KEY and token_is_valid(token):
         return JSONResponse({"message": "Valid token"})
     raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing or invalid API key"
@@ -59,3 +66,12 @@ async def logout_route(request: Request, token: Annotated[str, Depends(oauth2_sc
     """Logout a user"""
     await logout(token, request.state.clinic)
     return JSONResponse(content={}, status_code=status.HTTP_200_OK)
+
+
+@router.get("/user/by-token/")
+async def user_by_token(
+    token: Annotated[str, Depends(oauth2_scheme)],
+):
+    """Get user by token"""
+    user = await get_user_by_token(token)
+    return JSONResponse(content={"user": user.id}, status_code=status.HTTP_200_OK)
