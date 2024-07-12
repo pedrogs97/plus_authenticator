@@ -43,10 +43,10 @@ async def test_get_new_token(user_fixture):
     """Test get_new_token function"""
     user = user_fixture
     keys = [
-        "access_token",
-        "refresh_token",
-        "token_type",
-        "expires_at",
+        "accessToken",
+        "refreshToken",
+        "tokenType",
+        "expiresAt",
     ]
     dict_token = await get_new_token(user)
     assert all(key in dict_token.keys() for key in keys)
@@ -136,10 +136,10 @@ async def test_login_success(user_fixture):
     """Test login function. Success"""
     user = user_fixture
     keys = [
-        "access_token",
-        "refresh_token",
-        "token_type",
-        "expires_at",
+        "accessToken",
+        "refreshToken",
+        "tokenType",
+        "expiresAt",
     ]
 
     dict_token = await login(user.email, "password", None)
@@ -186,10 +186,10 @@ async def test_get_refresh_token_success(user_fixture):
     }
     token = jwt.encode(encode, SECRET_KEY, algorithm=ALGORITHM)
     keys = [
-        "access_token",
-        "refresh_token",
-        "token_type",
-        "expires_at",
+        "accessToken",
+        "refreshToken",
+        "tokenType",
+        "expiresAt",
     ]
 
     dict_token = await get_refresh_token(token, None)

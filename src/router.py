@@ -9,6 +9,7 @@ from fastapi.security.oauth2 import OAuth2PasswordRequestForm as LoginSchema
 from starlette.requests import Request
 
 from src.config import SERVICES_API_KEY
+from src.exceptions import invalid_refresh_token_exception
 from src.service import (
     get_refresh_token,
     get_user_by_token,
@@ -45,6 +46,8 @@ async def refresh_token(
 ):
     """Refresh a token"""
     response_data = await get_refresh_token(token, request.state.clinic)
+    if not response_data:
+        raise invalid_refresh_token_exception()
     return JSONResponse(content=response_data, status_code=status.HTTP_200_OK)
 
 

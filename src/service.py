@@ -50,11 +50,11 @@ async def get_new_token(user: UserModel) -> dict:
         "sub": user.id,
         "type": "access",
         "profile": profile.name if profile else "Super User",
-        "profile_id": profile.id if profile else "",
+        "profileId": profile.id if profile else "",
         "clinic": user.clinic.company_name if user.clinic else "",
-        "clinic_id": user.clinic.id if user.clinic_id else "",
+        "clinicId": user.clinic.id if user.clinic_id else "",
         "email": user.email,
-        "full_name": user.full_name,
+        "fullName": user.full_name,
         "permissions": permissions,
     }
     token = jwt.encode(encode, SECRET_KEY, algorithm=ALGORITHM)
@@ -66,11 +66,11 @@ async def get_new_token(user: UserModel) -> dict:
         "sub": user.id,
         "type": "refresh",
         "profile": profile.name if profile else "Super User",
-        "profile_id": profile.id if profile else "",
+        "profileId": profile.id if profile else "",
         "clinic": user.clinic.company_name if user.clinic else "",
-        "clinic_id": user.clinic.id if user.clinic_id else "",
+        "clinicId": user.clinic.id if user.clinic_id else "",
         "email": user.email,
-        "full_name": user.full_name,
+        "fullName": user.full_name,
         "permissions": permissions,
     }
     refresh_token = jwt.encode(refresh_encode, SECRET_KEY, algorithm=ALGORITHM)
@@ -90,10 +90,10 @@ async def get_new_token(user: UserModel) -> dict:
         old_token.refresh_expires_at = refresh_expire
         old_token.save()
     return {
-        "access_token": token,
-        "refresh_token": refresh_token,
-        "token_type": "Bearer",
-        "expires_at": access_expire_timestamp,
+        "accessToken": token,
+        "refreshToken": refresh_token,
+        "tokenType": "Bearer",
+        "expiresAt": access_expire_timestamp,
     }
 
 

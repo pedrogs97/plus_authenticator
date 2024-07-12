@@ -30,6 +30,16 @@ def token_exception() -> HTTPException:
     return token_exception_response
 
 
+def invalid_refresh_token_exception() -> HTTPException:
+    """Returns invalid refresh token exception"""
+    invalid_refresh_token_exception_response = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Token de atualização inválido",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    return invalid_refresh_token_exception_response
+
+
 async def default_response_exception(
     request: Request,
     exc: HTTPException,
