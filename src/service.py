@@ -34,7 +34,7 @@ def hash_password(password: str) -> str:
 
 async def get_new_token(user: UserModel) -> dict:
     """Generate new token"""
-    await user.fetch_related("profile", "profile__permissions")
+    await user.fetch_related("profile", "profile__permissions", "clinic")
     profile = user.profile if user.profile else None
     if profile and profile.permissions:
         permissions = [
@@ -88,7 +88,7 @@ async def get_new_token(user: UserModel) -> dict:
         old_token.refresh_token = refresh_token
         old_token.expires_at = access_expire_in
         old_token.refresh_expires_at = refresh_expire
-        old_token.save()
+        await old_token.save()
     return {
         "accessToken": token,
         "refreshToken": refresh_token,
